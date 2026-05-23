@@ -1,0 +1,150 @@
+package repositories
+
+import (
+	"go-fiber-mysql/internal/app/entities"
+	"go-fiber-mysql/internal/app/exception"
+	"go-fiber-mysql/internal/pkg/request"
+	"time"
+
+	"gorm.io/gorm"
+)
+
+type RoleRepository interface {
+	DB() *gorm.DB
+	WithTx(db *gorm.DB) RoleRepository
+	FindAll(db *gorm.DB, page, perPage int) ([]entities.Role, int64, error)
+	FindOne(id uint, includes []request.AppliedInclude) (entities.Role, error)
+	Create(data *entities.Role) error
+	Update(id uint, data map[string]any) error
+	Delete(id, userID uint) error
+	ForceDelete(id uint) error
+	Restore(id uint) error
+	SyncPermissions(id uint, permissionIDs []uint) error
+}
+
+type roleRepository struct {
+	db *gorm.DB
+}
+
+func NewRoleRepository(db *gorm.DB) RoleRepository {
+	return &roleRepository{
+		db: db,
+	}
+}
+
+func (r *roleRepository) DB() *gorm.DB {
+	return r.db.Model(&entities.Role{})
+}
+
+func (r *roleRepository) WithTx(tx *gorm.DB) RoleRepository {
+	return &roleRepository{db: tx}
+}
+
+func (r *roleRepository) FindAll(db *gorm.DB, page, perPage int) ([]entities.Role, int64, error) {
+	var datas []entities.Role
+	var total int64
+
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * perPage
+	if err := db.Limit(perPage).Offset(offset).Find(&datas).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return datas, total, nil
+}
+
+func (r *roleRepository) FindOne(id uint, includes []request.AppliedInclude) (entities.Role, error) {
+	var data entities.Role
+
+	db := r.DB()
+	for _, include := range includes {
+		db = include.Apply(db)
+	}
+
+	err := db.Take(&data, id).Error
+	return data, err
+}
+
+func (r *roleRepository) Create(data *entities.Role) error {
+	return r.db.Create(data).Error
+}
+
+func (r *roleRepository) Update(id uint, data map[string]any) error {
+	result := r.DB().Where(request.ParamID+"=?", id).Updates(data)
+
+	if result.RowsAffected <= 0 {
+		return exception.NewNotFoundException()
+	}
+
+	if result.Error != nil {
+		return exception.NewDatabaseException(result.Error)
+	}
+
+	return nil
+}
+
+func (r *roleRepository) Delete(id, userID uint) error {
+	result := r.DB().Where(request.ParamID+"=?", id).Updates(map[string]any{
+		entities.DeletedAt:   gorm.DeletedAt{Time: time.Now(), Valid: true},
+		entities.DeletedByID: userID,
+	})
+
+	if result.RowsAffected <= 0 {
+		return exception.NewNotFoundException()
+	}
+
+	if result.Error != nil {
+		return exception.NewDatabaseException(result.Error)
+	}
+
+	return nil
+}
+
+func (r *roleRepository) ForceDelete(id uint) error {
+	result := r.db.Unscoped().Delete(&entities.Role{}, id)
+
+	if result.RowsAffected <= 0 {
+		return exception.NewNotFoundException()
+	}
+
+	if result.Error != nil {
+		return exception.NewDatabaseException(result.Error)
+	}
+
+	return nil
+}
+
+func (r *roleRepository) Restore(id uint) error {
+	result := r.DB().Where(request.ParamID+"=?", id).UpdateColumns(map[string]any{
+		entities.DeletedByID: nil,
+	})
+
+	if result.RowsAffected <= 0 {
+		return exception.NewNotFoundException()
+	}
+
+	if result.Error != nil {
+		return exception.NewDatabaseException(result.Error)
+	}
+
+	return nil
+}
+
+func (r *roleRepository) SyncPermissions(id uint, permissionIDs []uint) error {
+	var role entities.Role
+	if err := r.db.First(&role, id).Error; err != nil {
+		return err
+	}
+
+	var permissions []entities.Permission
+	if len(permissionIDs) > 0 {
+		if err := r.db.Find(&permissions, permissionIDs).Error; err != nil {
+			return err
+		}
+	}
+
+	return r.db.Model(&role).Association("Permissions").Replace(permissions)
+}

@@ -1,0 +1,65 @@
+package jwt
+
+import (
+	"ticket-support/src/modules/users/entities"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+)
+
+type JwtTokenDetail struct {
+	AccessToken       string    `json:"access_token"`
+	AccessTokenExpiry time.Time `json:"access_token_expiry"`
+}
+
+func GenerateToken(user *entities.User, jwtSecret string) (*JwtTokenDetail, error) {
+	jwtTokenDetail := &JwtTokenDetail{}
+
+	jwtTokenDetail.AccessTokenExpiry = time.Now().Add(time.Hour * 24)
+
+	accessClaims := jwt.MapClaims{
+		"id":   user.ID,
+		"type": user.Type,
+		"exp":  jwtTokenDetail.AccessTokenExpiry.Unix(),
+	}
+
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
+
+	var err error
+
+	jwtTokenDetail.AccessToken, err = accessToken.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return nil, err
+	}
+
+	return jwtTokenDetail, nil
+}
+
+func ValidateToken(tokenString, secret string) (*jwt.Token, error) {
+	// jwt.ParseWithClaims()
+	return jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+
+		return []byte(secret), nil
+	})
+}
+
+func ExtractUser(token *jwt.Token) (jwt.MapClaims, error) {
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, jwt.ErrInvalidKey
+	}
+
+	return claims, nil
+}
+
+func ExtractUserID(token *jwt.Token) (uint, error) {
+	claims, err := ExtractUser(token)
+	if err != nil {
+		return 0, err
+	}
+
+	return uint(claims["id"].(float64)), nil
+}
