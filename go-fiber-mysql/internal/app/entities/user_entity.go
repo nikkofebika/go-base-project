@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"go-fiber-mysql/internal/app/enums"
 	"go-fiber-mysql/internal/app/helpers"
 	"time"
 
@@ -12,6 +13,7 @@ type User struct {
 	Name        string
 	Email       string
 	Password    string
+	Type        enums.UserType
 	LastLoginAt *time.Time
 
 	Roles []Role `gorm:"many2many:user_roles"`

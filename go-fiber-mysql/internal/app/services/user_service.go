@@ -21,6 +21,7 @@ type UserService interface {
 	ForceDelete(ctx context.Context, id uint) error
 	Restore(ctx context.Context, id uint) error
 	SyncRoles(ctx context.Context, id uint, request *requests.UserSyncRolesRequest) error
+	GetPermissionSlugsByUserID(ctx context.Context, userID uint) ([]string, error)
 }
 
 type userService struct {
@@ -160,4 +161,10 @@ func (s *userService) SyncRoles(ctx context.Context, id uint, req *requests.User
 	}
 
 	return nil
+}
+
+func (s *userService) GetPermissionSlugsByUserID(ctx context.Context, userID uint) ([]string, error) {
+	// No extraction check here because it might be called by middleware before context is fully set
+	// or specifically to check permissions for a given ID.
+	return s.repository.GetPermissionSlugsByUserID(userID)
 }

@@ -14,8 +14,8 @@ type RoleRepository interface {
 	WithTx(db *gorm.DB) RoleRepository
 	FindAll(db *gorm.DB, page, perPage int) ([]entities.Role, int64, error)
 	FindOne(id uint, includes []request.AppliedInclude) (entities.Role, error)
-	Create(data *entities.Role) error
-	Update(id uint, data map[string]any) error
+	Create(data *entities.Role, permissionIDs []uint) error
+	Update(id uint, data map[string]any, permissionIDs []uint) error
 	Delete(id, userID uint) error
 	ForceDelete(id uint) error
 	Restore(id uint) error
@@ -68,22 +68,57 @@ func (r *roleRepository) FindOne(id uint, includes []request.AppliedInclude) (en
 	return data, err
 }
 
-func (r *roleRepository) Create(data *entities.Role) error {
-	return r.db.Create(data).Error
+func (r *roleRepository) Create(data *entities.Role, permissionIDs []uint) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(data).Error; err != nil {
+			return err
+		}
+
+		if len(permissionIDs) > 0 {
+			var permissions []entities.Permission
+			if err := tx.Find(&permissions, permissionIDs).Error; err != nil {
+				return err
+			}
+			if err := tx.Model(data).Association("Permissions").Replace(permissions); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
-func (r *roleRepository) Update(id uint, data map[string]any) error {
-	result := r.DB().Where(request.ParamID+"=?", id).Updates(data)
+func (r *roleRepository) Update(id uint, data map[string]any, permissionIDs []uint) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		result := tx.Model(&entities.Role{}).Where(request.ParamID+"=?", id).Updates(data)
 
-	if result.RowsAffected <= 0 {
-		return exception.NewNotFoundException()
-	}
+		if result.Error != nil {
+			return result.Error
+		}
 
-	if result.Error != nil {
-		return exception.NewDatabaseException(result.Error)
-	}
+		if result.RowsAffected <= 0 {
+			return exception.NewNotFoundException()
+		}
 
-	return nil
+		if permissionIDs != nil {
+			var role entities.Role
+			if err := tx.First(&role, id).Error; err != nil {
+				return err
+			}
+
+			var permissions []entities.Permission
+			if len(permissionIDs) > 0 {
+				if err := tx.Find(&permissions, permissionIDs).Error; err != nil {
+					return err
+				}
+			}
+			if err := tx.Model(&role).Association("Permissions").Replace(permissions); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func (r *roleRepository) Delete(id, userID uint) error {

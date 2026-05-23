@@ -86,6 +86,14 @@ func NewUnauthorizedException() *BaseException {
 	}
 }
 
+func NewForbiddenException() *BaseException {
+	statusCode := fiber.StatusForbidden
+	return &BaseException{
+		StatusCode: statusCode,
+		Message:    utils.StatusMessage(statusCode),
+	}
+}
+
 type ValidationException struct {
 	*BaseException
 }

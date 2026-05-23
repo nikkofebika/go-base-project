@@ -86,7 +86,7 @@ func (s *roleService) Create(ctx context.Context, request *requests.RoleCreateRe
 		AuditCreatedEntity: entities.AuditCreatedEntity{CreatedByID: &userLoggedIn.ID},
 	}
 
-	return s.repository.Create(&data)
+	return s.repository.Create(&data, request.PermissionIDs)
 }
 
 func (s *roleService) Update(ctx context.Context, id uint, req *requests.RoleUpdateRequest) error {
@@ -102,7 +102,7 @@ func (s *roleService) Update(ctx context.Context, id uint, req *requests.RoleUpd
 
 	helpers.AddToMapIfNotNil(updates, "name", req.Name)
 
-	return s.repository.Update(id, updates)
+	return s.repository.Update(id, updates, req.PermissionIDs)
 }
 
 func (s *roleService) Delete(ctx context.Context, id uint) error {

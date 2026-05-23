@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"go-fiber-mysql/internal/app/entities"
+	"go-fiber-mysql/internal/app/enums"
 	"go-fiber-mysql/internal/config"
 	"time"
 
@@ -17,9 +18,10 @@ type JwtTokenDetail struct {
 }
 
 type jwtCustomClaims struct {
-	ID    uint   `json:"id"`
-	Name  string `json:"Name"`
-	Email string `json:"email"`
+	ID    uint           `json:"id"`
+	Name  string         `json:"name"`
+	Email string         `json:"email"`
+	Type  enums.UserType `json:"type"`
 	jwt.RegisteredClaims
 }
 
@@ -33,6 +35,7 @@ func GenerateToken(user *entities.User, appConfig *config.AppConfig) (JwtTokenDe
 		ID:    user.ID,
 		Name:  user.Name,
 		Email: user.Email,
+		Type:  user.Type,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(jwtTokenDetail.AccessTokenExpiry),
 			IssuedAt:  jwt.NewNumericDate(now),
@@ -54,6 +57,7 @@ func GenerateToken(user *entities.User, appConfig *config.AppConfig) (JwtTokenDe
 		ID:    user.ID,
 		Name:  user.Name,
 		Email: user.Email,
+		Type:  user.Type,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(jwtTokenDetail.RefreshTokenExpiry),
 			IssuedAt:  jwt.NewNumericDate(now),
@@ -92,6 +96,8 @@ func ExtractUser(token *jwt.Token) (*entities.User, error) {
 	return &entities.User{
 		Model: gorm.Model{ID: claims.ID},
 		Name:  claims.Name,
+		Email: claims.Email,
+		Type:  claims.Type,
 	}, nil
 }
 

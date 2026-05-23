@@ -7,11 +7,13 @@ import (
 )
 
 type RoleCreateRequest struct {
-	Name string `json:"name" validate:"required,min=2,max=50"`
+	Name          string `json:"name" validate:"required,min=2,max=50"`
+	PermissionIDs []uint `json:"permission_ids" validate:"omitempty,dive,exists=permissions.id"`
 }
 
 type RoleUpdateRequest struct {
-	Name *string `json:"name" validate:"omitempty,min=2,max=50"`
+	Name          *string `json:"name" validate:"omitempty,min=2,max=50"`
+	PermissionIDs []uint  `json:"permission_ids" validate:"omitempty,dive,exists=permissions.id"`
 }
 
 type RoleSyncPermissionsRequest struct {

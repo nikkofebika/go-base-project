@@ -2,6 +2,7 @@ package router
 
 import (
 	"go-fiber-mysql/internal/app/controllers"
+	"go-fiber-mysql/internal/app/enums"
 	"go-fiber-mysql/internal/app/middlewares"
 	"go-fiber-mysql/internal/app/repositories"
 	"go-fiber-mysql/internal/app/services"
@@ -10,13 +11,16 @@ import (
 )
 
 func registerRouterApi(router fiber.Router, deps *RouterDependencies) {
-	authRouter(router, deps)
-	usersRouter(router, deps)
-	rolesRouter(router, deps)
-	permissionsRouter(router, deps)
+	userRepository := repositories.NewUserRepository(deps.DB)
+	userService := services.NewUserService(userRepository)
+
+	authRouter(router, deps, userService)
+	usersRouter(router, deps, userService)
+	rolesRouter(router, deps, userService)
+	permissionsRouter(router, deps, userService)
 }
 
-func authRouter(router fiber.Router, deps *RouterDependencies) {
+func authRouter(router fiber.Router, deps *RouterDependencies, userService services.UserService) {
 	emailService := services.NewEmailService(deps.AppConfig.MailHost, deps.AppConfig.MailPort, deps.AppConfig.MailUser, deps.AppConfig.MailPass, deps.AppConfig.MailFrom)
 
 	tokenRepository := repositories.NewTokenRepository(deps.DB)
@@ -31,49 +35,47 @@ func authRouter(router fiber.Router, deps *RouterDependencies) {
 	r.Post("refresh-token", middlewares.AuthMiddleware(deps.AppConfig), controller.RefreshToken)
 }
 
-func usersRouter(router fiber.Router, deps *RouterDependencies) {
-	repository := repositories.NewUserRepository(deps.DB)
-	service := services.NewUserService(repository)
+func usersRouter(router fiber.Router, deps *RouterDependencies, service services.UserService) {
 	controller := controllers.NewUserController(service, deps.Validator)
 
 	r := router.Group("users", middlewares.AuthMiddleware(deps.AppConfig))
-	r.Get("", controller.FindAll)
-	r.Get("/:id", controller.FindOne)
-	r.Post("", controller.Create)
-	r.Patch("/:id", controller.Update)
-	r.Delete("/:id", controller.Delete)
-	r.Patch("/:id/restore", controller.Restore)
-	r.Delete("/:id/force", controller.ForceDelete)
-	r.Post("/:id/roles", controller.SyncRoles)
+	r.Get("", middlewares.PermissionMiddleware(service, enums.PermissionUserRead), controller.FindAll)
+	r.Get("/:id", middlewares.PermissionMiddleware(service, enums.PermissionUserRead), controller.FindOne)
+	r.Post("", middlewares.PermissionMiddleware(service, enums.PermissionUserCreate), controller.Create)
+	r.Patch("/:id", middlewares.PermissionMiddleware(service, enums.PermissionUserUpdate), controller.Update)
+	r.Delete("/:id", middlewares.PermissionMiddleware(service, enums.PermissionUserDelete), controller.Delete)
+	r.Patch("/:id/restore", middlewares.PermissionMiddleware(service, enums.PermissionUserRestore), controller.Restore)
+	r.Delete("/:id/force", middlewares.PermissionMiddleware(service, enums.PermissionUserForceDelete), controller.ForceDelete)
+	r.Post("/:id/roles", middlewares.PermissionMiddleware(service, enums.PermissionUserSyncRoles), controller.SyncRoles)
 }
 
-func rolesRouter(router fiber.Router, deps *RouterDependencies) {
+func rolesRouter(router fiber.Router, deps *RouterDependencies, userService services.UserService) {
 	repository := repositories.NewRoleRepository(deps.DB)
 	service := services.NewRoleService(repository)
 	controller := controllers.NewRoleController(service, deps.Validator)
 
 	r := router.Group("roles", middlewares.AuthMiddleware(deps.AppConfig))
-	r.Get("", controller.FindAll)
-	r.Get("/:id", controller.FindOne)
-	r.Post("", controller.Create)
-	r.Patch("/:id", controller.Update)
-	r.Delete("/:id", controller.Delete)
-	r.Patch("/:id/restore", controller.Restore)
-	r.Delete("/:id/force", controller.ForceDelete)
-	r.Post("/:id/permissions", controller.SyncPermissions)
+	r.Get("", middlewares.PermissionMiddleware(userService, enums.PermissionRoleRead), controller.FindAll)
+	r.Get("/:id", middlewares.PermissionMiddleware(userService, enums.PermissionRoleRead), controller.FindOne)
+	r.Post("", middlewares.PermissionMiddleware(userService, enums.PermissionRoleCreate), controller.Create)
+	r.Patch("/:id", middlewares.PermissionMiddleware(userService, enums.PermissionRoleUpdate), controller.Update)
+	r.Delete("/:id", middlewares.PermissionMiddleware(userService, enums.PermissionRoleDelete), controller.Delete)
+	r.Patch("/:id/restore", middlewares.PermissionMiddleware(userService, enums.PermissionRoleRestore), controller.Restore)
+	r.Delete("/:id/force", middlewares.PermissionMiddleware(userService, enums.PermissionRoleForceDelete), controller.ForceDelete)
+	r.Post("/:id/permissions", middlewares.PermissionMiddleware(userService, enums.PermissionRoleSyncPermissions), controller.SyncPermissions)
 }
 
-func permissionsRouter(router fiber.Router, deps *RouterDependencies) {
+func permissionsRouter(router fiber.Router, deps *RouterDependencies, userService services.UserService) {
 	repository := repositories.NewPermissionRepository(deps.DB)
 	service := services.NewPermissionService(repository)
 	controller := controllers.NewPermissionController(service, deps.Validator)
 
 	r := router.Group("permissions", middlewares.AuthMiddleware(deps.AppConfig))
-	r.Get("", controller.FindAll)
-	r.Get("/:id", controller.FindOne)
-	r.Post("", controller.Create)
-	r.Patch("/:id", controller.Update)
-	r.Delete("/:id", controller.Delete)
-	r.Patch("/:id/restore", controller.Restore)
-	r.Delete("/:id/force", controller.ForceDelete)
+	r.Get("", middlewares.PermissionMiddleware(userService, enums.PermissionPermissionRead), controller.FindAll)
+	r.Get("/:id", middlewares.PermissionMiddleware(userService, enums.PermissionPermissionRead), controller.FindOne)
+	r.Post("", middlewares.PermissionMiddleware(userService, enums.PermissionRoleCreate), controller.Create)
+	r.Patch("/:id", middlewares.PermissionMiddleware(userService, enums.PermissionRoleUpdate), controller.Update)
+	r.Delete("/:id", middlewares.PermissionMiddleware(userService, enums.PermissionRoleDelete), controller.Delete)
+	r.Patch("/:id/restore", middlewares.PermissionMiddleware(userService, enums.PermissionRoleRestore), controller.Restore)
+	r.Delete("/:id/force", middlewares.PermissionMiddleware(userService, enums.PermissionRoleForceDelete), controller.ForceDelete)
 }

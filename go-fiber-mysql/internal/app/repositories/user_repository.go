@@ -21,6 +21,7 @@ type UserRepository interface {
 	ForceDelete(id uint) error
 	Restore(id uint) error
 	SyncRoles(id uint, roleIDs []uint) error
+	GetPermissionSlugsByUserID(userID uint) ([]string, error)
 
 	GetRefreshToken(token string) (entities.Token, error)
 	DeleteRefreshToken(id uint) error
@@ -163,6 +164,20 @@ func (r *userRepository) SyncRoles(id uint, roleIDs []uint) error {
 	}
 
 	return r.db.Model(&user).Association("Roles").Replace(roles)
+}
+
+func (r *userRepository) GetPermissionSlugsByUserID(userID uint) ([]string, error) {
+	var slugs []string
+
+	err := r.db.Table("permissions").
+		Joins("JOIN role_permissions ON role_permissions.permission_id = permissions.id").
+		Joins("JOIN roles ON roles.id = role_permissions.role_id").
+		Joins("JOIN user_roles ON user_roles.role_id = roles.id").
+		Where("user_roles.user_id = ?", userID).
+		Distinct("permissions.slug").
+		Pluck("permissions.slug", &slugs).Error
+
+	return slugs, err
 }
 
 // for jwt
