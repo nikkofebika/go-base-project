@@ -6,8 +6,8 @@ import (
 )
 
 type Token struct {
-	ID        uint
-	UserID    uint
+	IDEntity
+	UserID    uint64
 	Type      enums.TokenType
 	Token     string
 	ExpiresAt time.Time

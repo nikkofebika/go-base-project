@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"gorm.io/gorm"
 )
 
 type JwtTokenDetail struct {
@@ -18,7 +17,7 @@ type JwtTokenDetail struct {
 }
 
 type jwtCustomClaims struct {
-	ID    uint           `json:"id"`
+	ID    uint64         `json:"id"`
 	Name  string         `json:"name"`
 	Email string         `json:"email"`
 	Type  enums.UserType `json:"type"`
@@ -94,14 +93,14 @@ func ExtractUser(token *jwt.Token) (*entities.User, error) {
 	}
 
 	return &entities.User{
-		Model: gorm.Model{ID: claims.ID},
-		Name:  claims.Name,
-		Email: claims.Email,
-		Type:  claims.Type,
+		IDEntity: entities.IDEntity{ID: claims.ID},
+		Name:     claims.Name,
+		Email:    claims.Email,
+		Type:     claims.Type,
 	}, nil
 }
 
-func ExtractUserID(token *jwt.Token) (uint, error) {
+func ExtractUserID(token *jwt.Token) (uint64, error) {
 	user, err := ExtractUser(token)
 	if err != nil {
 		return 0, err

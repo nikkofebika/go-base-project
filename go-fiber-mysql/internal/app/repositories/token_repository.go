@@ -11,7 +11,7 @@ type TokenRepository interface {
 	WithTx(db *gorm.DB) TokenRepository
 	DB() *gorm.DB
 	GetToken(token string) (entities.Token, error)
-	DeleteByUserID(userID uint, tokenType enums.TokenType) error
+	DeleteByUserID(userID uint64, tokenType enums.TokenType) error
 	DeleteByToken(token string) error
 	RevokeToken(token string) error
 	SaveToken(token *entities.Token) error
@@ -43,7 +43,7 @@ func (r *tokenRepository) SaveToken(token *entities.Token) error {
 	return r.db.Save(token).Error
 }
 
-func (r *tokenRepository) DeleteByUserID(userID uint, tokenType enums.TokenType) error {
+func (r *tokenRepository) DeleteByUserID(userID uint64, tokenType enums.TokenType) error {
 	return r.db.Where("user_id = ?", userID).Where("type=?", tokenType).Delete(&entities.Token{}).Error
 }
 
@@ -54,4 +54,3 @@ func (r *tokenRepository) DeleteByToken(token string) error {
 func (r *tokenRepository) RevokeToken(token string) error {
 	return r.db.Model(&entities.Token{}).Where("token = ?", token).Update("is_revoked", true).Error
 }
-

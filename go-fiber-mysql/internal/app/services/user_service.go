@@ -14,14 +14,14 @@ import (
 
 type UserService interface {
 	FindAll(ctx context.Context, request *request.PaginationRequest) ([]entities.User, *helpers.Meta, error)
-	FindOne(ctx context.Context, id uint, includes []request.AppliedInclude) (entities.User, error)
+	FindOne(ctx context.Context, id uint64, includes []request.AppliedInclude) (entities.User, error)
 	Create(ctx context.Context, request *requests.UserCreateRequest) error
-	Update(ctx context.Context, id uint, request *requests.UserUpdateRequest) error
-	Delete(ctx context.Context, id uint) error
-	ForceDelete(ctx context.Context, id uint) error
-	Restore(ctx context.Context, id uint) error
-	SyncRoles(ctx context.Context, id uint, request *requests.UserSyncRolesRequest) error
-	GetPermissionSlugsByUserID(ctx context.Context, userID uint) ([]string, error)
+	Update(ctx context.Context, id uint64, request *requests.UserUpdateRequest) error
+	Delete(ctx context.Context, id uint64) error
+	ForceDelete(ctx context.Context, id uint64) error
+	Restore(ctx context.Context, id uint64) error
+	SyncRoles(ctx context.Context, id uint64, request *requests.UserSyncRolesRequest) error
+	GetPermissionSlugsByUserID(ctx context.Context, userID uint64) ([]string, error)
 }
 
 type userService struct {
@@ -62,7 +62,7 @@ func (s *userService) FindAll(ctx context.Context, req *request.PaginationReques
 	return datas, meta, nil
 }
 
-func (s *userService) FindOne(ctx context.Context, id uint, includes []request.AppliedInclude) (entities.User, error) {
+func (s *userService) FindOne(ctx context.Context, id uint64, includes []request.AppliedInclude) (entities.User, error) {
 	_, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return entities.User{}, err
@@ -86,13 +86,13 @@ func (s *userService) Create(ctx context.Context, request *requests.UserCreateRe
 		Name:               request.Name,
 		Email:              request.Email,
 		Password:           request.Password,
-		AuditCreatedEntity: entities.AuditCreatedEntity{CreatedByID: &userLoggedIn.ID},
+		AuditCreatedEntity: entities.AuditCreatedEntity{CreatedByIDEntity: entities.CreatedByIDEntity{CreatedByID: &userLoggedIn.ID}},
 	}
 
 	return s.repository.Create(&data)
 }
 
-func (s *userService) Update(ctx context.Context, id uint, req *requests.UserUpdateRequest) error {
+func (s *userService) Update(ctx context.Context, id uint64, req *requests.UserUpdateRequest) error {
 	userLoggedIn, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err
@@ -122,7 +122,7 @@ func (s *userService) Update(ctx context.Context, id uint, req *requests.UserUpd
 	return s.repository.Update(id, updates)
 }
 
-func (s *userService) Delete(ctx context.Context, id uint) error {
+func (s *userService) Delete(ctx context.Context, id uint64) error {
 	user, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err
@@ -131,7 +131,7 @@ func (s *userService) Delete(ctx context.Context, id uint) error {
 	return s.repository.Delete(id, user.ID)
 }
 
-func (s *userService) ForceDelete(ctx context.Context, id uint) error {
+func (s *userService) ForceDelete(ctx context.Context, id uint64) error {
 	_, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err
@@ -140,7 +140,7 @@ func (s *userService) ForceDelete(ctx context.Context, id uint) error {
 	return s.repository.ForceDelete(id)
 }
 
-func (s *userService) Restore(ctx context.Context, id uint) error {
+func (s *userService) Restore(ctx context.Context, id uint64) error {
 	_, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err
@@ -149,7 +149,7 @@ func (s *userService) Restore(ctx context.Context, id uint) error {
 	return s.repository.Restore(id)
 }
 
-func (s *userService) SyncRoles(ctx context.Context, id uint, req *requests.UserSyncRolesRequest) error {
+func (s *userService) SyncRoles(ctx context.Context, id uint64, req *requests.UserSyncRolesRequest) error {
 	_, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err
@@ -163,7 +163,7 @@ func (s *userService) SyncRoles(ctx context.Context, id uint, req *requests.User
 	return nil
 }
 
-func (s *userService) GetPermissionSlugsByUserID(ctx context.Context, userID uint) ([]string, error) {
+func (s *userService) GetPermissionSlugsByUserID(ctx context.Context, userID uint64) ([]string, error) {
 	// No extraction check here because it might be called by middleware before context is fully set
 	// or specifically to check permissions for a given ID.
 	return s.repository.GetPermissionSlugsByUserID(userID)

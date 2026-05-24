@@ -9,7 +9,7 @@ import (
 )
 
 type User struct {
-	gorm.Model
+	IDEntity
 	Name        string
 	Email       string
 	Password    string

@@ -23,7 +23,9 @@ func main() {
 	// seeder
 	args := os.Args
 	if len(args) > 1 && args[1] == "--seed" {
-		seeders.Seed(db)
+		if err := seeders.Seed(db); err != nil {
+			panic(err)
+		}
 		return
 	}
 

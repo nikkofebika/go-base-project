@@ -13,13 +13,13 @@ type RoleRepository interface {
 	DB() *gorm.DB
 	WithTx(db *gorm.DB) RoleRepository
 	FindAll(db *gorm.DB, page, perPage int) ([]entities.Role, int64, error)
-	FindOne(id uint, includes []request.AppliedInclude) (entities.Role, error)
+	FindOne(id uint64, includes []request.AppliedInclude) (entities.Role, error)
 	Create(data *entities.Role, permissionIDs []uint) error
-	Update(id uint, data map[string]any, permissionIDs []uint) error
-	Delete(id, userID uint) error
-	ForceDelete(id uint) error
-	Restore(id uint) error
-	SyncPermissions(id uint, permissionIDs []uint) error
+	Update(id uint64, data map[string]any, permissionIDs []uint) error
+	Delete(id, userID uint64) error
+	ForceDelete(id uint64) error
+	Restore(id uint64) error
+	SyncPermissions(id uint64, permissionIDs []uint) error
 }
 
 type roleRepository struct {
@@ -56,7 +56,7 @@ func (r *roleRepository) FindAll(db *gorm.DB, page, perPage int) ([]entities.Rol
 	return datas, total, nil
 }
 
-func (r *roleRepository) FindOne(id uint, includes []request.AppliedInclude) (entities.Role, error) {
+func (r *roleRepository) FindOne(id uint64, includes []request.AppliedInclude) (entities.Role, error) {
 	var data entities.Role
 
 	db := r.DB()
@@ -88,7 +88,7 @@ func (r *roleRepository) Create(data *entities.Role, permissionIDs []uint) error
 	})
 }
 
-func (r *roleRepository) Update(id uint, data map[string]any, permissionIDs []uint) error {
+func (r *roleRepository) Update(id uint64, data map[string]any, permissionIDs []uint) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		result := tx.Model(&entities.Role{}).Where(request.ParamID+"=?", id).Updates(data)
 
@@ -121,7 +121,7 @@ func (r *roleRepository) Update(id uint, data map[string]any, permissionIDs []ui
 	})
 }
 
-func (r *roleRepository) Delete(id, userID uint) error {
+func (r *roleRepository) Delete(id, userID uint64) error {
 	result := r.DB().Where(request.ParamID+"=?", id).Updates(map[string]any{
 		entities.DeletedAt:   gorm.DeletedAt{Time: time.Now(), Valid: true},
 		entities.DeletedByID: userID,
@@ -138,7 +138,7 @@ func (r *roleRepository) Delete(id, userID uint) error {
 	return nil
 }
 
-func (r *roleRepository) ForceDelete(id uint) error {
+func (r *roleRepository) ForceDelete(id uint64) error {
 	result := r.db.Unscoped().Delete(&entities.Role{}, id)
 
 	if result.RowsAffected <= 0 {
@@ -152,7 +152,7 @@ func (r *roleRepository) ForceDelete(id uint) error {
 	return nil
 }
 
-func (r *roleRepository) Restore(id uint) error {
+func (r *roleRepository) Restore(id uint64) error {
 	result := r.DB().Where(request.ParamID+"=?", id).UpdateColumns(map[string]any{
 		entities.DeletedByID: nil,
 	})
@@ -168,7 +168,7 @@ func (r *roleRepository) Restore(id uint) error {
 	return nil
 }
 
-func (r *roleRepository) SyncPermissions(id uint, permissionIDs []uint) error {
+func (r *roleRepository) SyncPermissions(id uint64, permissionIDs []uint) error {
 	var role entities.Role
 	if err := r.db.First(&role, id).Error; err != nil {
 		return err

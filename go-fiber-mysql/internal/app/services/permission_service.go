@@ -14,12 +14,12 @@ import (
 
 type PermissionService interface {
 	FindAll(ctx context.Context, request *request.PaginationRequest) ([]entities.Permission, *helpers.Meta, error)
-	FindOne(ctx context.Context, id uint, includes []request.AppliedInclude) (entities.Permission, error)
+	FindOne(ctx context.Context, id uint64, includes []request.AppliedInclude) (entities.Permission, error)
 	Create(ctx context.Context, request *requests.PermissionCreateRequest) error
-	Update(ctx context.Context, id uint, request *requests.PermissionUpdateRequest) error
-	Delete(ctx context.Context, id uint) error
-	ForceDelete(ctx context.Context, id uint) error
-	Restore(ctx context.Context, id uint) error
+	Update(ctx context.Context, id uint64, request *requests.PermissionUpdateRequest) error
+	Delete(ctx context.Context, id uint64) error
+	ForceDelete(ctx context.Context, id uint64) error
+	Restore(ctx context.Context, id uint64) error
 }
 
 type permissionService struct {
@@ -60,7 +60,7 @@ func (s *permissionService) FindAll(ctx context.Context, req *request.Pagination
 	return datas, meta, nil
 }
 
-func (s *permissionService) FindOne(ctx context.Context, id uint, includes []request.AppliedInclude) (entities.Permission, error) {
+func (s *permissionService) FindOne(ctx context.Context, id uint64, includes []request.AppliedInclude) (entities.Permission, error) {
 	_, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return entities.Permission{}, err
@@ -83,13 +83,13 @@ func (s *permissionService) Create(ctx context.Context, request *requests.Permis
 	data := entities.Permission{
 		Name:               request.Name,
 		Slug:               request.Slug,
-		AuditCreatedEntity: entities.AuditCreatedEntity{CreatedByID: &userLoggedIn.ID},
+		AuditCreatedEntity: entities.AuditCreatedEntity{CreatedByIDEntity: entities.CreatedByIDEntity{CreatedByID: &userLoggedIn.ID}},
 	}
 
 	return s.repository.Create(&data)
 }
 
-func (s *permissionService) Update(ctx context.Context, id uint, req *requests.PermissionUpdateRequest) error {
+func (s *permissionService) Update(ctx context.Context, id uint64, req *requests.PermissionUpdateRequest) error {
 	userLoggedIn, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func (s *permissionService) Update(ctx context.Context, id uint, req *requests.P
 	return s.repository.Update(id, updates)
 }
 
-func (s *permissionService) Delete(ctx context.Context, id uint) error {
+func (s *permissionService) Delete(ctx context.Context, id uint64) error {
 	user, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err
@@ -115,7 +115,7 @@ func (s *permissionService) Delete(ctx context.Context, id uint) error {
 	return s.repository.Delete(id, user.ID)
 }
 
-func (s *permissionService) ForceDelete(ctx context.Context, id uint) error {
+func (s *permissionService) ForceDelete(ctx context.Context, id uint64) error {
 	_, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err
@@ -124,7 +124,7 @@ func (s *permissionService) ForceDelete(ctx context.Context, id uint) error {
 	return s.repository.ForceDelete(id)
 }
 
-func (s *permissionService) Restore(ctx context.Context, id uint) error {
+func (s *permissionService) Restore(ctx context.Context, id uint64) error {
 	_, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err

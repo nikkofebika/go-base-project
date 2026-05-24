@@ -13,12 +13,12 @@ type PermissionRepository interface {
 	DB() *gorm.DB
 	WithTx(db *gorm.DB) PermissionRepository
 	FindAll(db *gorm.DB, page, perPage int) ([]entities.Permission, int64, error)
-	FindOne(id uint, includes []request.AppliedInclude) (entities.Permission, error)
+	FindOne(id uint64, includes []request.AppliedInclude) (entities.Permission, error)
 	Create(data *entities.Permission) error
-	Update(id uint, data map[string]any) error
-	Delete(id, userID uint) error
-	ForceDelete(id uint) error
-	Restore(id uint) error
+	Update(id uint64, data map[string]any) error
+	Delete(id, userID uint64) error
+	ForceDelete(id uint64) error
+	Restore(id uint64) error
 }
 
 type permissionRepository struct {
@@ -55,7 +55,7 @@ func (r *permissionRepository) FindAll(db *gorm.DB, page, perPage int) ([]entiti
 	return datas, total, nil
 }
 
-func (r *permissionRepository) FindOne(id uint, includes []request.AppliedInclude) (entities.Permission, error) {
+func (r *permissionRepository) FindOne(id uint64, includes []request.AppliedInclude) (entities.Permission, error) {
 	var data entities.Permission
 
 	db := r.DB()
@@ -71,7 +71,7 @@ func (r *permissionRepository) Create(data *entities.Permission) error {
 	return r.db.Create(data).Error
 }
 
-func (r *permissionRepository) Update(id uint, data map[string]any) error {
+func (r *permissionRepository) Update(id uint64, data map[string]any) error {
 	result := r.DB().Where(request.ParamID+"=?", id).Updates(data)
 
 	if result.RowsAffected <= 0 {
@@ -85,7 +85,7 @@ func (r *permissionRepository) Update(id uint, data map[string]any) error {
 	return nil
 }
 
-func (r *permissionRepository) Delete(id, userID uint) error {
+func (r *permissionRepository) Delete(id, userID uint64) error {
 	result := r.DB().Where(request.ParamID+"=?", id).Updates(map[string]any{
 		entities.DeletedAt:   gorm.DeletedAt{Time: time.Now(), Valid: true},
 		entities.DeletedByID: userID,
@@ -102,7 +102,7 @@ func (r *permissionRepository) Delete(id, userID uint) error {
 	return nil
 }
 
-func (r *permissionRepository) ForceDelete(id uint) error {
+func (r *permissionRepository) ForceDelete(id uint64) error {
 	result := r.db.Unscoped().Delete(&entities.Permission{}, id)
 
 	if result.RowsAffected <= 0 {
@@ -116,7 +116,7 @@ func (r *permissionRepository) ForceDelete(id uint) error {
 	return nil
 }
 
-func (r *permissionRepository) Restore(id uint) error {
+func (r *permissionRepository) Restore(id uint64) error {
 	result := r.DB().Where(request.ParamID+"=?", id).UpdateColumns(map[string]any{
 		entities.DeletedByID: nil,
 	})

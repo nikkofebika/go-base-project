@@ -15,13 +15,13 @@ const (
 
 // ExtractUserIDFromLocals safely extracts user_id from fiber context locals
 // Returns the user_id and an error if extraction fails
-func ExtractUserIDFromLocals(ctx fiber.Ctx) (uint, error) {
+func ExtractUserIDFromLocals(ctx fiber.Ctx) (uint64, error) {
 	userIDVal := ctx.Locals(UserIDContextKey)
 	if userIDVal == nil {
 		return 0, exception.NewUnauthorizedException()
 	}
 
-	userID, ok := userIDVal.(uint)
+	userID, ok := userIDVal.(uint64)
 	if !ok {
 		return 0, exception.NewUnauthorizedException()
 	}
@@ -31,7 +31,7 @@ func ExtractUserIDFromLocals(ctx fiber.Ctx) (uint, error) {
 
 // ContextWithUserID creates a new context with user_id attached
 // This replaces the repetitive pattern of extracting, converting, and setting user_id
-func ContextWithUserID(ctx fiber.Ctx) (context.Context, uint, error) {
+func ContextWithUserID(ctx fiber.Ctx) (context.Context, uint64, error) {
 	userID, err := ExtractUserIDFromLocals(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -74,8 +74,8 @@ func ExtractUserFromLocals(ctx fiber.Ctx) (*entities.User, error) {
 }
 
 // ValidateParamID validates an ID parameter is a positive integer
-// Returns the ID as uint and an error if validation fails
-func ValidateParamID(ctx fiber.Ctx, paramName string) (uint, error) {
+// Returns the ID as uint64 and an error if validation fails
+func ValidateParamID(ctx fiber.Ctx, paramName string) (uint64, error) {
 	// id, err := ctx.ParamsInt(paramName)
 	id := fiber.Params[int](ctx, paramName)
 	// if err != nil {
@@ -86,18 +86,18 @@ func ValidateParamID(ctx fiber.Ctx, paramName string) (uint, error) {
 		return 0, exception.NewBadRequestException(paramName + " must be greater than 0")
 	}
 
-	return uint(id), nil
+	return uint64(id), nil
 }
 
 // ExtractUserIDFromContext safely extracts user_id from a context
 // Used by service layer to get user_id that was set by handler
-func ExtractUserIDFromContext(ctx context.Context) (uint, error) {
+func ExtractUserIDFromContext(ctx context.Context) (uint64, error) {
 	userIDVal := ctx.Value(UserIDContextKey)
 	if userIDVal == nil {
 		return 0, exception.NewUnauthorizedException()
 	}
 
-	userID, ok := userIDVal.(uint)
+	userID, ok := userIDVal.(uint64)
 	if !ok {
 		return 0, exception.NewUnauthorizedException()
 	}

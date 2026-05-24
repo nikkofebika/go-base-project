@@ -13,18 +13,18 @@ type UserRepository interface {
 	DB() *gorm.DB
 	WithTx(db *gorm.DB) UserRepository
 	FindAll(db *gorm.DB, page, perPage int) ([]entities.User, int64, error)
-	FindOne(id uint, includes []request.AppliedInclude) (entities.User, error)
+	FindOne(id uint64, includes []request.AppliedInclude) (entities.User, error)
 	FindOneByEmail(email string) (entities.User, error)
 	Create(data *entities.User) error
-	Update(id uint, data map[string]any) error
-	Delete(id, userID uint) error
-	ForceDelete(id uint) error
-	Restore(id uint) error
-	SyncRoles(id uint, roleIDs []uint) error
-	GetPermissionSlugsByUserID(userID uint) ([]string, error)
+	Update(id uint64, data map[string]any) error
+	Delete(id, userID uint64) error
+	ForceDelete(id uint64) error
+	Restore(id uint64) error
+	SyncRoles(id uint64, roleIDs []uint) error
+	GetPermissionSlugsByUserID(userID uint64) ([]string, error)
 
 	GetRefreshToken(token string) (entities.Token, error)
-	DeleteRefreshToken(id uint) error
+	DeleteRefreshToken(id uint64) error
 	SaveRefreshToken(refreshToken *entities.Token) error
 }
 
@@ -63,7 +63,7 @@ func (r *userRepository) FindAll(db *gorm.DB, page, perPage int) ([]entities.Use
 
 }
 
-func (r *userRepository) FindOne(id uint, includes []request.AppliedInclude) (entities.User, error) {
+func (r *userRepository) FindOne(id uint64, includes []request.AppliedInclude) (entities.User, error) {
 	var data entities.User
 
 	db := r.DB()
@@ -89,7 +89,7 @@ func (r *userRepository) Create(data *entities.User) error {
 	return r.db.Create(data).Error
 }
 
-func (r *userRepository) Update(id uint, data map[string]any) error {
+func (r *userRepository) Update(id uint64, data map[string]any) error {
 	result := r.DB().Where(request.ParamID+"=?", id).Updates(data)
 
 	if result.RowsAffected <= 0 {
@@ -103,7 +103,7 @@ func (r *userRepository) Update(id uint, data map[string]any) error {
 	return nil
 }
 
-func (r *userRepository) Delete(id, userID uint) error {
+func (r *userRepository) Delete(id, userID uint64) error {
 	result := r.DB().Where(request.ParamID+"=?", id).Updates(map[string]any{
 		entities.DeletedAt:   gorm.DeletedAt{Time: time.Now(), Valid: true},
 		entities.DeletedByID: userID,
@@ -120,7 +120,7 @@ func (r *userRepository) Delete(id, userID uint) error {
 	return nil
 }
 
-func (r *userRepository) ForceDelete(id uint) error {
+func (r *userRepository) ForceDelete(id uint64) error {
 	result := r.db.Unscoped().Delete(&entities.User{}, id)
 
 	if result.RowsAffected <= 0 {
@@ -134,7 +134,7 @@ func (r *userRepository) ForceDelete(id uint) error {
 	return nil
 }
 
-func (r *userRepository) Restore(id uint) error {
+func (r *userRepository) Restore(id uint64) error {
 	result := r.DB().Where(request.ParamID+"=?", id).UpdateColumns(map[string]any{
 		entities.DeletedByID: nil,
 	})
@@ -150,7 +150,7 @@ func (r *userRepository) Restore(id uint) error {
 	return nil
 }
 
-func (r *userRepository) SyncRoles(id uint, roleIDs []uint) error {
+func (r *userRepository) SyncRoles(id uint64, roleIDs []uint) error {
 	var user entities.User
 	if err := r.db.First(&user, id).Error; err != nil {
 		return err
@@ -166,7 +166,7 @@ func (r *userRepository) SyncRoles(id uint, roleIDs []uint) error {
 	return r.db.Model(&user).Association("Roles").Replace(roles)
 }
 
-func (r *userRepository) GetPermissionSlugsByUserID(userID uint) ([]string, error) {
+func (r *userRepository) GetPermissionSlugsByUserID(userID uint64) ([]string, error) {
 	var slugs []string
 
 	err := r.db.Table("permissions").
@@ -187,7 +187,7 @@ func (r *userRepository) GetRefreshToken(token string) (entities.Token, error) {
 	return data, err
 }
 
-func (r *userRepository) DeleteRefreshToken(id uint) error {
+func (r *userRepository) DeleteRefreshToken(id uint64) error {
 	return r.db.Where("user_id = ?", id).Delete(&entities.Token{}).Error
 }
 

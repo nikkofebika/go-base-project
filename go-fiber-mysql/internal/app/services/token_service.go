@@ -13,10 +13,10 @@ import (
 )
 
 type TokenService interface {
-	CreateToken(userID uint, expiresIn time.Duration) (string, error)
+	CreateToken(userID uint64, expiresIn time.Duration) (string, error)
 	ValidateToken(tokenString string) (*entities.Token, error)
 	RevokeToken(tokenString string) error
-	RevokeAllUserTokens(userID uint, tokenType enums.TokenType) error
+	RevokeAllUserTokens(userID uint64, tokenType enums.TokenType) error
 }
 
 type tokenService struct {
@@ -36,7 +36,7 @@ func generateSecureToken() (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-func (s *tokenService) CreateToken(userID uint, expiresIn time.Duration) (string, error) {
+func (s *tokenService) CreateToken(userID uint64, expiresIn time.Duration) (string, error) {
 	tokenString, err := generateSecureToken()
 	if err != nil {
 		return "", exception.NewInternalServerException("Failed to generate token")
@@ -80,6 +80,6 @@ func (s *tokenService) RevokeToken(tokenString string) error {
 	return s.repository.RevokeToken(tokenString)
 }
 
-func (s *tokenService) RevokeAllUserTokens(userID uint, tokenType enums.TokenType) error {
+func (s *tokenService) RevokeAllUserTokens(userID uint64, tokenType enums.TokenType) error {
 	return s.repository.DeleteByUserID(userID, tokenType)
 }

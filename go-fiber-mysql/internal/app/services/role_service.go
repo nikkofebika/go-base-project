@@ -14,13 +14,13 @@ import (
 
 type RoleService interface {
 	FindAll(ctx context.Context, request *request.PaginationRequest) ([]entities.Role, *helpers.Meta, error)
-	FindOne(ctx context.Context, id uint, includes []request.AppliedInclude) (entities.Role, error)
+	FindOne(ctx context.Context, id uint64, includes []request.AppliedInclude) (entities.Role, error)
 	Create(ctx context.Context, request *requests.RoleCreateRequest) error
-	Update(ctx context.Context, id uint, request *requests.RoleUpdateRequest) error
-	Delete(ctx context.Context, id uint) error
-	ForceDelete(ctx context.Context, id uint) error
-	Restore(ctx context.Context, id uint) error
-	SyncPermissions(ctx context.Context, id uint, request *requests.RoleSyncPermissionsRequest) error
+	Update(ctx context.Context, id uint64, request *requests.RoleUpdateRequest) error
+	Delete(ctx context.Context, id uint64) error
+	ForceDelete(ctx context.Context, id uint64) error
+	Restore(ctx context.Context, id uint64) error
+	SyncPermissions(ctx context.Context, id uint64, request *requests.RoleSyncPermissionsRequest) error
 }
 
 type roleService struct {
@@ -61,7 +61,7 @@ func (s *roleService) FindAll(ctx context.Context, req *request.PaginationReques
 	return datas, meta, nil
 }
 
-func (s *roleService) FindOne(ctx context.Context, id uint, includes []request.AppliedInclude) (entities.Role, error) {
+func (s *roleService) FindOne(ctx context.Context, id uint64, includes []request.AppliedInclude) (entities.Role, error) {
 	_, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return entities.Role{}, err
@@ -83,13 +83,13 @@ func (s *roleService) Create(ctx context.Context, request *requests.RoleCreateRe
 
 	data := entities.Role{
 		Name:               request.Name,
-		AuditCreatedEntity: entities.AuditCreatedEntity{CreatedByID: &userLoggedIn.ID},
+		AuditCreatedEntity: entities.AuditCreatedEntity{CreatedByIDEntity: entities.CreatedByIDEntity{CreatedByID: &userLoggedIn.ID}},
 	}
 
 	return s.repository.Create(&data, request.PermissionIDs)
 }
 
-func (s *roleService) Update(ctx context.Context, id uint, req *requests.RoleUpdateRequest) error {
+func (s *roleService) Update(ctx context.Context, id uint64, req *requests.RoleUpdateRequest) error {
 	userLoggedIn, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (s *roleService) Update(ctx context.Context, id uint, req *requests.RoleUpd
 	return s.repository.Update(id, updates, req.PermissionIDs)
 }
 
-func (s *roleService) Delete(ctx context.Context, id uint) error {
+func (s *roleService) Delete(ctx context.Context, id uint64) error {
 	user, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err
@@ -114,7 +114,7 @@ func (s *roleService) Delete(ctx context.Context, id uint) error {
 	return s.repository.Delete(id, user.ID)
 }
 
-func (s *roleService) ForceDelete(ctx context.Context, id uint) error {
+func (s *roleService) ForceDelete(ctx context.Context, id uint64) error {
 	_, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err
@@ -123,7 +123,7 @@ func (s *roleService) ForceDelete(ctx context.Context, id uint) error {
 	return s.repository.ForceDelete(id)
 }
 
-func (s *roleService) Restore(ctx context.Context, id uint) error {
+func (s *roleService) Restore(ctx context.Context, id uint64) error {
 	_, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err
@@ -132,7 +132,7 @@ func (s *roleService) Restore(ctx context.Context, id uint) error {
 	return s.repository.Restore(id)
 }
 
-func (s *roleService) SyncPermissions(ctx context.Context, id uint, req *requests.RoleSyncPermissionsRequest) error {
+func (s *roleService) SyncPermissions(ctx context.Context, id uint64, req *requests.RoleSyncPermissionsRequest) error {
 	_, err := ctxHelper.ExtractUserFromContext(ctx)
 	if err != nil {
 		return err

@@ -6,16 +6,16 @@ import (
 )
 
 type PermissionResponse struct {
-	ID   uint   `json:"id"`
+	ID   uint64 `json:"id"`
 	Name string `json:"name,omitempty"`
 	Slug string `json:"slug,omitempty"`
 
 	CreatedAt   *string `json:"created_at,omitempty"`
-	CreatedByID *uint   `json:"created_by_id,omitempty"`
+	CreatedByID *uint64 `json:"created_by_id,omitempty"`
 	UpdatedAt   *string `json:"updated_at,omitempty"`
-	UpdatedByID *uint   `json:"updated_by_id,omitempty"`
+	UpdatedByID *uint64 `json:"updated_by_id,omitempty"`
 	DeletedAt   *string `json:"deleted_at,omitempty"`
-	DeletedByID *uint   `json:"deleted_by_id,omitempty"`
+	DeletedByID *uint64 `json:"deleted_by_id,omitempty"`
 }
 
 func NewPermissionResponse(data *entities.Permission) PermissionResponse {

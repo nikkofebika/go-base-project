@@ -25,7 +25,7 @@ type ResetPasswordEmailData struct {
 
 type AuthService interface {
 	ForgotPassword(request *requests.ForgotPasswordRequest) error
-	Me(userId uint, request *request.PaginationRequest) (*entities.User, error)
+	Me(userId uint64, request *request.PaginationRequest) (*entities.User, error)
 	RefreshToken(oldRefreshTokenString string) (*jwt.JwtTokenDetail, error)
 	ResetPassword(request *requests.ResetPasswordRequest) error
 	Token(request *requests.TokenRequest) (jwt.JwtTokenDetail, error)
@@ -183,7 +183,7 @@ func (s *authService) RefreshToken(oldRefreshTokenString string) (*jwt.JwtTokenD
 		// Hapus SEMUA refresh token milik user ini (Force Logout Hacker & Victim)
 
 		// Jalankan di background dengan context independen agar tetap berjalan meski request selesai
-		go func(userID uint) {
+		go func(userID uint64) {
 			bgCtx, cancel := context.WithTimeout(context.Background(),
 				10*time.Second)
 			defer cancel()
@@ -236,7 +236,7 @@ func (s *authService) RefreshToken(oldRefreshTokenString string) (*jwt.JwtTokenD
 	return &newToken, nil
 }
 
-func (s *authService) Me(userId uint, request *request.PaginationRequest) (*entities.User, error) {
+func (s *authService) Me(userId uint64, request *request.PaginationRequest) (*entities.User, error) {
 	user, err := s.userRepository.FindOne(userId, request.Includes)
 	if err != nil {
 		return nil, err
