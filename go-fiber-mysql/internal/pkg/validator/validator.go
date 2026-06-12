@@ -8,6 +8,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
+
+	// "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -28,22 +30,23 @@ func NewValidator(db *gorm.DB) *Validator {
 }
 
 func (val *Validator) registerCustomRules() {
+	var err error
 
-	// if err = val.V.RegisterValidation("exists", existsValidator(val.DB)); err != nil {
-	// 	logrus.Fatalf("exists validation error: %v", err)
-	// }
+	if err = val.V.RegisterValidation("exists", existsValidator(val.DB)); err != nil {
+		// logrus.Fatalf("exists validation error: %v", err)
+	}
 
-	// if err = val.V.RegisterValidation("unique", uniqueValidator(val.DB)); err != nil {
-	// 	logrus.Fatalf("unique validation error: %v", err)
-	// }
+	if err = val.V.RegisterValidation("unique", uniqueValidator(val.DB)); err != nil {
+		// logrus.Fatalf("unique validation error: %v", err)
+	}
 
-	// if err := val.V.RegisterValidation("enum", enumValidator()); err != nil {
-	// 	logrus.Fatalf("enum validation error: %v", err)
-	// }
+	if err := val.V.RegisterValidation("enum", enumValidator()); err != nil {
+		// logrus.Fatalf("enum validation error: %v", err)
+	}
 
-	// if err := val.V.RegisterValidation("length", LengthValidator()); err != nil {
-	// 	logrus.Fatalf("length validation error: %v", err)
-	// }
+	if err := val.V.RegisterValidation("length", LengthValidator()); err != nil {
+		// logrus.Fatalf("length validation error: %v", err)
+	}
 }
 
 func (val *Validator) Struct(s any) error {

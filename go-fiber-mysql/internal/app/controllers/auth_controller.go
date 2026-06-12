@@ -24,6 +24,32 @@ func NewAuthController(service services.AuthService, validator *validator.Valida
 	}
 }
 
+func (c *AuthController) ForgotPassword(ctx fiber.Ctx) error {
+	body, err := validator.ValidateBody[requests.ForgotPasswordRequest](ctx, c.validator)
+	if err != nil {
+		return err
+	}
+
+	if err = c.service.ForgotPassword(body); err != nil {
+		return err
+	}
+
+	return helpers.NewResponseMessage(ctx, fiber.StatusOK, "Password reset link has been sent to your email")
+}
+
+func (c *AuthController) ResetPassword(ctx fiber.Ctx) error {
+	body, err := validator.ValidateBody[requests.ResetPasswordRequest](ctx, c.validator)
+	if err != nil {
+		return err
+	}
+
+	if err = c.service.ResetPassword(body); err != nil {
+		return err
+	}
+
+	return helpers.NewResponseMessage(ctx, fiber.StatusOK, "Password reset successfully")
+}
+
 func (c *AuthController) Token(ctx fiber.Ctx) error {
 	body, err := validator.ValidateBody[requests.TokenRequest](ctx, c.validator)
 	if err != nil {

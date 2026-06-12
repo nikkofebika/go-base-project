@@ -63,7 +63,7 @@ func NewAppConfig() *AppConfig {
 		AppName:    getString("APP_NAME", "Go Fiber MYSQL"),
 		AppPort:    getInt("APP_PORT", 8080),
 		AppEnv:     getString("APP_ENV", "development"),
-		WebUrl:     getString("WEB_URL", ""),
+		WebUrl:     getString("WEB_URL", "http://localhost:8000"),
 		AppPrefork: getBool("APP_PREFORK", true),
 
 		AwsAccessKeyID:     getString("AWS_ACCESS_KEY_ID", ""),

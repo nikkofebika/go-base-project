@@ -5,8 +5,9 @@ type ForgotPasswordRequest struct {
 }
 
 type ResetPasswordRequest struct {
-	Token    string `json:"token" form:"token" validate:"required"`
-	Password string `json:"password" form:"password" validate:"required"`
+	Token                string `json:"token" form:"token" validate:"required"`
+	Password             string `json:"password" form:"password" validate:"required"`
+	PasswordConfirmation string `json:"password_confirmation" form:"password_confirmation" validate:"required,eqfield=Password"`
 }
 
 type TokenRequest struct {

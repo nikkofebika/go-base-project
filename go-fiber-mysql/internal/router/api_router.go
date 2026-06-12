@@ -31,9 +31,11 @@ func authRouter(router fiber.Router, deps *RouterDependencies, userService servi
 	controller := controllers.NewAuthController(service, deps.Validator)
 
 	r := router.Group("auth")
-	r.Post("token", controller.Token)
-	r.Post("refresh-token", middlewares.AuthMiddleware(deps.AppConfig), controller.RefreshToken)
+	r.Post("forgot-password", middlewares.AuthMiddleware(deps.AppConfig), controller.ForgotPassword)
 	r.Get("me", middlewares.AuthMiddleware(deps.AppConfig), controller.Me)
+	r.Post("refresh-token", middlewares.AuthMiddleware(deps.AppConfig), controller.RefreshToken)
+	r.Post("reset-password", middlewares.AuthMiddleware(deps.AppConfig), controller.ResetPassword)
+	r.Post("token", controller.Token)
 }
 
 func usersRouter(router fiber.Router, deps *RouterDependencies, service services.UserService) {
