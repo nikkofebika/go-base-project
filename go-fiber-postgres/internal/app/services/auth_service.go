@@ -8,6 +8,7 @@ import (
 	"go-fiber-postgres/internal/app/enums"
 	"go-fiber-postgres/internal/app/exception"
 	"go-fiber-postgres/internal/app/helpers"
+	ctxHelper "go-fiber-postgres/internal/app/helpers/context"
 	"go-fiber-postgres/internal/app/repositories"
 	"go-fiber-postgres/internal/app/requests"
 	"go-fiber-postgres/internal/config"
@@ -25,7 +26,7 @@ type ResetPasswordEmailData struct {
 
 type AuthService interface {
 	ForgotPassword(request *requests.ForgotPasswordRequest) error
-	Me(userId uint64, request *request.PaginationRequest) (*entities.User, error)
+	Me(context context.Context, includes []request.AppliedInclude) (*entities.User, error)
 	RefreshToken(oldRefreshTokenString string) (*jwt.JwtTokenDetail, error)
 	ResetPassword(request *requests.ResetPasswordRequest) error
 	Token(request *requests.TokenRequest) (jwt.JwtTokenDetail, error)
@@ -191,7 +192,7 @@ func (s *authService) RefreshToken(oldRefreshTokenString string) (*jwt.JwtTokenD
 			// Pastikan operasi ini tidak terikat dengan context request yang sudah selesai
 			_ = bgCtx // bypass context if repo doesn't support it yet, but it's good practice
 
-			if err := s.userRepository.DeleteRefreshToken(userID); err != nil {
+			if err := s.userRepository.DeleteRefreshTokenByUserID(userID); err != nil {
 				// Gunakan logging untuk memantau kegagalan di background task
 				fmt.Printf("[Background Task] Failed to delete all refresh tokens for user %d: %v\n", userID, err)
 			}
@@ -201,8 +202,7 @@ func (s *authService) RefreshToken(oldRefreshTokenString string) (*jwt.JwtTokenD
 	}
 
 	// 6. ROTASI: Matikan token lama
-	refreshToken.IsRevoked = true
-	if s.userRepository.SaveRefreshToken(&refreshToken) != nil {
+	if s.userRepository.DeleteRefreshToken(oldRefreshTokenString) != nil {
 		return nil, exception.NewUnauthorizedException()
 	}
 
@@ -236,10 +236,15 @@ func (s *authService) RefreshToken(oldRefreshTokenString string) (*jwt.JwtTokenD
 	return &newToken, nil
 }
 
-func (s *authService) Me(userId uint64, request *request.PaginationRequest) (*entities.User, error) {
-	user, err := s.userRepository.FindOne(userId, request.Includes)
+func (s *authService) Me(context context.Context, includes []request.AppliedInclude) (*entities.User, error) {
+	userID, err := ctxHelper.ExtractUserIDFromContext(context)
 	if err != nil {
-		return nil, err
+		return nil, exception.NewUnauthorizedException()
+	}
+
+	user, err := s.userRepository.FindOne(userID, includes)
+	if err != nil {
+		return nil, exception.NewUnauthorizedException()
 	}
 
 	return &user, nil

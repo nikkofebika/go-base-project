@@ -2,8 +2,11 @@ package controllers
 
 import (
 	"go-fiber-mysql/internal/app/helpers"
+	"go-fiber-mysql/internal/app/helpers/context"
 	"go-fiber-mysql/internal/app/requests"
+	"go-fiber-mysql/internal/app/responses"
 	"go-fiber-mysql/internal/app/services"
+	"go-fiber-mysql/internal/pkg/request"
 	"go-fiber-mysql/internal/pkg/validator"
 
 	"github.com/gofiber/fiber/v3"
@@ -36,7 +39,32 @@ func (c *AuthController) Token(ctx fiber.Ctx) error {
 }
 
 func (c *AuthController) RefreshToken(ctx fiber.Ctx) error {
-	return ctx.JSON(fiber.Map{
-		"data": "RefreshToken",
-	})
+	request, err := validator.ValidateBody[requests.RefreshTokenRequest](ctx, c.validator)
+
+	if err != nil {
+		return err
+	}
+
+	token, err := c.service.RefreshToken(request.RefreshToken)
+	if err != nil {
+		return err
+	}
+
+	return helpers.NewResponse(ctx, token)
+}
+
+func (c *AuthController) Me(ctx fiber.Ctx) error {
+	incudes := request.BuildIncludes(ctx, requests.UserAllowedIncludes)
+
+	context, _, err := context.ContextWithUserID(ctx)
+	if err != nil {
+		return err
+	}
+
+	user, err := c.service.Me(context, incudes)
+	if err != nil {
+		return err
+	}
+
+	return helpers.NewResponse(ctx, responses.NewUserResponse(user))
 }

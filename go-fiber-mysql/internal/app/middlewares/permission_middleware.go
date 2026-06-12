@@ -40,7 +40,7 @@ func PermissionMiddleware(service services.UserService, requiredPermissions ...e
 		} else {
 			// 3. Fetch from DB if not cached
 			var err error
-			userPermissions, err = service.GetPermissionSlugsByUserID(ctx.Context(), userID)
+			userPermissions, err = service.GetPermissionByUserID(ctx.Context(), userID)
 			if err != nil {
 				return exception.NewInternalServerException(err.Error())
 			}

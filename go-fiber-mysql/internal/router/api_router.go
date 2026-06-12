@@ -33,6 +33,7 @@ func authRouter(router fiber.Router, deps *RouterDependencies, userService servi
 	r := router.Group("auth")
 	r.Post("token", controller.Token)
 	r.Post("refresh-token", middlewares.AuthMiddleware(deps.AppConfig), controller.RefreshToken)
+	r.Get("me", middlewares.AuthMiddleware(deps.AppConfig), controller.Me)
 }
 
 func usersRouter(router fiber.Router, deps *RouterDependencies, service services.UserService) {

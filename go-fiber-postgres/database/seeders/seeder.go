@@ -36,13 +36,12 @@ func permissionSeeder(db *gorm.DB) error {
 	for _, p := range enums.GetAllPermissions() {
 		permissions = append(permissions, entities.Permission{
 			Name: p.String(),
-			Slug: p.String(),
 		})
 	}
 
 	for _, p := range permissions {
 		var existing entities.Permission
-		if err := db.Where("slug = ?", p.Slug).First(&existing).Error; err != nil {
+		if err := db.Where("name = ?", p.Name).First(&existing).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
 				if err := db.Create(&p).Error; err != nil {
 					return err

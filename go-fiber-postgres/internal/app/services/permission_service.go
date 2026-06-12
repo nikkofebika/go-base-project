@@ -82,7 +82,6 @@ func (s *permissionService) Create(ctx context.Context, request *requests.Permis
 
 	data := entities.Permission{
 		Name:               request.Name,
-		Slug:               request.Slug,
 		AuditCreatedEntity: entities.AuditCreatedEntity{CreatedByIDEntity: entities.CreatedByIDEntity{CreatedByID: &userLoggedIn.ID}},
 	}
 
@@ -101,7 +100,6 @@ func (s *permissionService) Update(ctx context.Context, id uint64, req *requests
 	}
 
 	helpers.AddToMapIfNotNil(updates, "name", req.Name)
-	helpers.AddToMapIfNotNil(updates, "slug", req.Slug)
 
 	return s.repository.Update(id, updates)
 }

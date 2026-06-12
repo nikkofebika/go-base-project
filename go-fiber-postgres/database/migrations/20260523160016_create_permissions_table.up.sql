@@ -1,7 +1,6 @@
 CREATE TABLE permissions (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  name VARCHAR(255) NOT NULL UNIQUE,
-  slug CITEXT NOT NULL UNIQUE,
+  name CITEXT NOT NULL UNIQUE,
 
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_by_id BIGINT NULL,
@@ -13,4 +12,3 @@ CREATE TABLE permissions (
 
 -- indexes
 CREATE INDEX idx_permissions_name ON permissions(name);
--- CREATE INDEX idx_permissions_slug ON permissions(slug);

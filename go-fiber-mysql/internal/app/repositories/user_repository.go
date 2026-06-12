@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"go-fiber-mysql/internal/app/entities"
+	"go-fiber-mysql/internal/app/enums"
 	"go-fiber-mysql/internal/app/exception"
 	"go-fiber-mysql/internal/pkg/request"
 	"time"
@@ -21,10 +22,11 @@ type UserRepository interface {
 	ForceDelete(id uint64) error
 	Restore(id uint64) error
 	SyncRoles(id uint64, roleIDs []uint) error
-	GetPermissionSlugsByUserID(userID uint64) ([]string, error)
+	GetPermissionByUserID(userID uint64) ([]string, error)
 
 	GetRefreshToken(token string) (entities.Token, error)
-	DeleteRefreshToken(id uint64) error
+	DeleteRefreshTokenByUserID(id uint64) error
+	DeleteRefreshToken(refreshToken string) error
 	SaveRefreshToken(refreshToken *entities.Token) error
 }
 
@@ -166,18 +168,18 @@ func (r *userRepository) SyncRoles(id uint64, roleIDs []uint) error {
 	return r.db.Model(&user).Association("Roles").Replace(roles)
 }
 
-func (r *userRepository) GetPermissionSlugsByUserID(userID uint64) ([]string, error) {
-	var slugs []string
+func (r *userRepository) GetPermissionByUserID(userID uint64) ([]string, error) {
+	var names []string
 
 	err := r.db.Table("permissions").
 		Joins("JOIN role_permissions ON role_permissions.permission_id = permissions.id").
 		Joins("JOIN roles ON roles.id = role_permissions.role_id").
 		Joins("JOIN user_roles ON user_roles.role_id = roles.id").
 		Where("user_roles.user_id = ?", userID).
-		Distinct("permissions.slug").
-		Pluck("permissions.slug", &slugs).Error
+		Distinct("permissions.name").
+		Pluck("permissions.name", &names).Error
 
-	return slugs, err
+	return names, err
 }
 
 // for jwt
@@ -187,8 +189,14 @@ func (r *userRepository) GetRefreshToken(token string) (entities.Token, error) {
 	return data, err
 }
 
-func (r *userRepository) DeleteRefreshToken(id uint64) error {
+func (r *userRepository) DeleteRefreshTokenByUserID(id uint64) error {
 	return r.db.Where("user_id = ?", id).Delete(&entities.Token{}).Error
+}
+
+func (r *userRepository) DeleteRefreshToken(refreshToken string) error {
+	return r.db.Where("token = ?", refreshToken).
+		Where("type = ?", enums.TokenTypeRefreshToken).
+		Delete(&entities.Token{}).Error
 }
 
 func (r *userRepository) SaveRefreshToken(refreshToken *entities.Token) error {
