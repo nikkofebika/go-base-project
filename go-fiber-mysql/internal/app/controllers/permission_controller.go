@@ -149,7 +149,7 @@ func (c *PermissionController) ForceDelete(ctx fiber.Ctx) error {
 		return err
 	}
 
-	return helpers.NewResponseRestored(ctx)
+	return helpers.NewResponseForceDeleted(ctx)
 }
 
 func (c *PermissionController) Restore(ctx fiber.Ctx) error {
