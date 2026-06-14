@@ -26,7 +26,7 @@ type ResetPasswordEmailData struct {
 
 type AuthService interface {
 	ForgotPassword(request *requests.ForgotPasswordRequest) error
-	Me(context context.Context, includes []request.AppliedInclude) (*entities.User, error)
+	Me(ctx context.Context, includes []request.AppliedInclude) (*entities.User, error)
 	RefreshToken(oldRefreshTokenString string) (*jwt.JwtTokenDetail, error)
 	ResetPassword(request *requests.ResetPasswordRequest) error
 	Token(request *requests.TokenRequest) (jwt.JwtTokenDetail, error)
@@ -71,7 +71,7 @@ func (s *authService) Token(req *requests.TokenRequest) (jwt.JwtTokenDetail, err
 		IsRevoked: false,
 	}
 
-	if err := s.userRepository.SaveRefreshToken(refreshToken); err != nil {
+	if err := s.tokenService.SaveRefreshToken(refreshToken); err != nil {
 		return jwt.JwtTokenDetail{}, err
 	}
 
@@ -168,7 +168,7 @@ func (s *authService) RefreshToken(oldRefreshTokenString string) (*jwt.JwtTokenD
 	}
 
 	// 3. Cek keberadaan token di Database (Stateful check)
-	refreshToken, err := s.userRepository.GetRefreshToken(oldRefreshTokenString)
+	refreshToken, err := s.tokenService.GetRefreshToken(oldRefreshTokenString)
 	if err != nil {
 		return nil, exception.NewUnauthorizedException()
 	}
@@ -192,7 +192,7 @@ func (s *authService) RefreshToken(oldRefreshTokenString string) (*jwt.JwtTokenD
 			// Pastikan operasi ini tidak terikat dengan context request yang sudah selesai
 			_ = bgCtx // bypass context if repo doesn't support it yet, but it's good practice
 
-			if err := s.userRepository.DeleteRefreshTokenByUserID(userID); err != nil {
+			if err := s.tokenService.DeleteAllByUserID(userID); err != nil {
 				// Gunakan logging untuk memantau kegagalan di background task
 				fmt.Printf("[Background Task] Failed to delete all refresh tokens for user %d: %v\n", userID, err)
 			}
@@ -202,7 +202,7 @@ func (s *authService) RefreshToken(oldRefreshTokenString string) (*jwt.JwtTokenD
 	}
 
 	// 6. ROTASI: Matikan token lama
-	if s.userRepository.DeleteRefreshToken(oldRefreshTokenString) != nil {
+	if s.tokenService.DeleteRefreshToken(oldRefreshTokenString) != nil {
 		return nil, exception.NewUnauthorizedException()
 	}
 
@@ -227,7 +227,7 @@ func (s *authService) RefreshToken(oldRefreshTokenString string) (*jwt.JwtTokenD
 		IsRevoked: false,
 	}
 
-	if err := s.userRepository.SaveRefreshToken(&newStoredToken); err != nil {
+	if err := s.tokenService.SaveRefreshToken(&newStoredToken); err != nil {
 		return nil, err
 	}
 
@@ -236,8 +236,8 @@ func (s *authService) RefreshToken(oldRefreshTokenString string) (*jwt.JwtTokenD
 	return &newToken, nil
 }
 
-func (s *authService) Me(context context.Context, includes []request.AppliedInclude) (*entities.User, error) {
-	userID, err := ctxHelper.ExtractUserIDFromContext(context)
+func (s *authService) Me(ctx context.Context, includes []request.AppliedInclude) (*entities.User, error) {
+	userID, err := ctxHelper.ExtractUserIDFromContext(ctx)
 	if err != nil {
 		return nil, exception.NewUnauthorizedException()
 	}

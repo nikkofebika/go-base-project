@@ -80,14 +80,14 @@ func (c *AuthController) RefreshToken(ctx fiber.Ctx) error {
 }
 
 func (c *AuthController) Me(ctx fiber.Ctx) error {
-	incudes := request.BuildIncludes(ctx, requests.UserAllowedIncludes)
+	includes := request.BuildIncludes(ctx, requests.UserAllowedIncludes)
 
-	context, _, err := context.ContextWithUserID(ctx)
+	userCtx, _, err := context.ContextWithUserID(ctx)
 	if err != nil {
 		return err
 	}
 
-	user, err := c.service.Me(context, incudes)
+	user, err := c.service.Me(userCtx, includes)
 	if err != nil {
 		return err
 	}

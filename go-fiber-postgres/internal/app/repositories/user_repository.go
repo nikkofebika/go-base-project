@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"go-fiber-postgres/internal/app/entities"
-	"go-fiber-postgres/internal/app/enums"
 	"go-fiber-postgres/internal/app/exception"
 	"go-fiber-postgres/internal/pkg/request"
 	"time"
@@ -21,13 +20,9 @@ type UserRepository interface {
 	Delete(id, userID uint64) error
 	ForceDelete(id uint64) error
 	Restore(id uint64) error
-	SyncRoles(id uint64, roleIDs []uint) error
+	SyncRoles(id uint64, roleIDs []uint64) error
 	GetPermissionByUserID(userID uint64) ([]string, error)
 
-	GetRefreshToken(token string) (entities.Token, error)
-	DeleteRefreshTokenByUserID(id uint64) error
-	DeleteRefreshToken(refreshToken string) error
-	SaveRefreshToken(refreshToken *entities.Token) error
 }
 
 type userRepository struct {
@@ -153,7 +148,7 @@ func (r *userRepository) Restore(id uint64) error {
 	return nil
 }
 
-func (r *userRepository) SyncRoles(id uint64, roleIDs []uint) error {
+func (r *userRepository) SyncRoles(id uint64, roleIDs []uint64) error {
 	var user entities.User
 	if err := r.db.First(&user, id).Error; err != nil {
 		return err
@@ -182,26 +177,3 @@ func (r *userRepository) GetPermissionByUserID(userID uint64) ([]string, error) 
 
 	return names, err
 }
-
-// for jwt
-func (r *userRepository) GetRefreshToken(token string) (entities.Token, error) {
-	var data entities.Token
-	err := r.db.Where("token = ?", token).First(&data).Error
-	return data, err
-}
-
-func (r *userRepository) DeleteRefreshTokenByUserID(id uint64) error {
-	return r.db.Where("user_id = ?", id).Delete(&entities.Token{}).Error
-}
-
-func (r *userRepository) DeleteRefreshToken(refreshToken string) error {
-	return r.db.Where("token = ?", refreshToken).
-		Where("type = ?", enums.TokenTypeRefreshToken).
-		Delete(&entities.Token{}).Error
-}
-
-func (r *userRepository) SaveRefreshToken(refreshToken *entities.Token) error {
-	return r.db.Save(refreshToken).Error
-}
-
-// for jwt

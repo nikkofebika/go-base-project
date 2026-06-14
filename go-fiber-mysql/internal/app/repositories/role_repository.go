@@ -14,12 +14,12 @@ type RoleRepository interface {
 	WithTx(db *gorm.DB) RoleRepository
 	FindAll(db *gorm.DB, page, perPage int) ([]entities.Role, int64, error)
 	FindOne(id uint64, includes []request.AppliedInclude) (entities.Role, error)
-	Create(data *entities.Role, permissionIDs []uint) error
-	Update(id uint64, data map[string]any, permissionIDs []uint) error
+	Create(data *entities.Role, permissionIDs []uint64) error
+	Update(id uint64, data map[string]any, permissionIDs []uint64) error
 	Delete(id, userID uint64) error
 	ForceDelete(id uint64) error
 	Restore(id uint64) error
-	SyncPermissions(id uint64, permissionIDs []uint) error
+	SyncPermissions(id uint64, permissionIDs []uint64) error
 }
 
 type roleRepository struct {
@@ -68,7 +68,7 @@ func (r *roleRepository) FindOne(id uint64, includes []request.AppliedInclude) (
 	return data, err
 }
 
-func (r *roleRepository) Create(data *entities.Role, permissionIDs []uint) error {
+func (r *roleRepository) Create(data *entities.Role, permissionIDs []uint64) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(data).Error; err != nil {
 			return err
@@ -88,7 +88,7 @@ func (r *roleRepository) Create(data *entities.Role, permissionIDs []uint) error
 	})
 }
 
-func (r *roleRepository) Update(id uint64, data map[string]any, permissionIDs []uint) error {
+func (r *roleRepository) Update(id uint64, data map[string]any, permissionIDs []uint64) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		result := tx.Model(&entities.Role{}).Where(request.ParamID+"=?", id).Updates(data)
 
@@ -169,7 +169,7 @@ func (r *roleRepository) Restore(id uint64) error {
 	return nil
 }
 
-func (r *roleRepository) SyncPermissions(id uint64, permissionIDs []uint) error {
+func (r *roleRepository) SyncPermissions(id uint64, permissionIDs []uint64) error {
 	var role entities.Role
 	if err := r.db.First(&role, id).Error; err != nil {
 		return err

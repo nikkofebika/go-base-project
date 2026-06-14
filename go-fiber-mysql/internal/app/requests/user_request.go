@@ -19,7 +19,7 @@ type UserUpdateRequest struct {
 }
 
 type UserSyncRolesRequest struct {
-	RoleIDs []uint `json:"role_ids" validate:"required,dive,exists=roles.id"`
+	RoleIDs []uint64 `json:"role_ids" validate:"required,dive,exists=roles.id"`
 }
 
 // pagination request

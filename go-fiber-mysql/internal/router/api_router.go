@@ -24,7 +24,7 @@ func authRouter(router fiber.Router, deps *RouterDependencies, userService servi
 	emailService := services.NewEmailService(deps.AppConfig.MailHost, deps.AppConfig.MailPort, deps.AppConfig.MailUser, deps.AppConfig.MailPass, deps.AppConfig.MailFrom)
 
 	tokenRepository := repositories.NewTokenRepository(deps.DB)
-	tokenService := services.NewTokenService(tokenRepository, deps.DB)
+	tokenService := services.NewTokenService(tokenRepository)
 
 	userRepository := repositories.NewUserRepository(deps.DB)
 	service := services.NewAuthService(deps.AppConfig, emailService, userRepository, tokenService)

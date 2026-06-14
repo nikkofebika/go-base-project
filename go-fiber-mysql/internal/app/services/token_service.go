@@ -17,15 +17,18 @@ type TokenService interface {
 	ValidateToken(tokenString string) (*entities.Token, error)
 	RevokeToken(tokenString string) error
 	RevokeAllUserTokens(userID uint64, tokenType enums.TokenType) error
+	GetRefreshToken(token string) (*entities.Token, error)
+	SaveRefreshToken(token *entities.Token) error
+	DeleteRefreshToken(token string) error
+	DeleteAllByUserID(userID uint64) error
 }
 
 type tokenService struct {
 	repository repositories.TokenRepository
-	db         *gorm.DB
 }
 
-func NewTokenService(repository repositories.TokenRepository, db *gorm.DB) TokenService {
-	return &tokenService{repository, db}
+func NewTokenService(repository repositories.TokenRepository) TokenService {
+	return &tokenService{repository: repository}
 }
 
 func generateSecureToken() (string, error) {
@@ -82,4 +85,24 @@ func (s *tokenService) RevokeToken(tokenString string) error {
 
 func (s *tokenService) RevokeAllUserTokens(userID uint64, tokenType enums.TokenType) error {
 	return s.repository.DeleteByUserID(userID, tokenType)
+}
+
+func (s *tokenService) GetRefreshToken(token string) (*entities.Token, error) {
+	data, err := s.repository.GetRefreshToken(token)
+	if err != nil {
+		return nil, err
+	}
+	return &data, nil
+}
+
+func (s *tokenService) SaveRefreshToken(token *entities.Token) error {
+	return s.repository.SaveRefreshToken(token)
+}
+
+func (s *tokenService) DeleteRefreshToken(token string) error {
+	return s.repository.DeleteRefreshToken(token)
+}
+
+func (s *tokenService) DeleteAllByUserID(userID uint64) error {
+	return s.repository.DeleteAllByUserID(userID)
 }
