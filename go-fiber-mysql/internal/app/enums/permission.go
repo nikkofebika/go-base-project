@@ -20,9 +20,6 @@ const (
 	PermissionRoleRestore         Permission = "role.restore"
 	PermissionRoleForceDelete     Permission = "role.force_delete"
 	PermissionRoleSyncPermissions Permission = "role.sync_permissions"
-
-	// Permission Permissions
-	PermissionPermissionRead Permission = "permission.read"
 )
 
 func (p Permission) String() string {
@@ -46,7 +43,5 @@ func GetAllPermissions() []Permission {
 		PermissionRoleRestore,
 		PermissionRoleForceDelete,
 		PermissionRoleSyncPermissions,
-
-		PermissionPermissionRead,
 	}
 }

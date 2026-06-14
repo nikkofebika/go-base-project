@@ -111,6 +111,10 @@ func (s *userService) Update(ctx context.Context, id uint64, req *requests.UserU
 		}
 	}
 
+	if len(errors) > 0 {
+		return exception.NewValidationException(errors)
+	}
+
 	updates := entities.UpdatedFields{
 		entities.UpdatedAt:   time.Now(),
 		entities.UpdatedByID: userLoggedIn.ID,

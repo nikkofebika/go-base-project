@@ -74,8 +74,8 @@ func permissionsRouter(router fiber.Router, deps *RouterDependencies, userServic
 	controller := controllers.NewPermissionController(service, deps.Validator)
 
 	r := router.Group("permissions", middlewares.AuthMiddleware(deps.AppConfig))
-	r.Get("", middlewares.PermissionMiddleware(userService, enums.PermissionPermissionRead), controller.FindAll)
-	r.Get("/:id", middlewares.PermissionMiddleware(userService, enums.PermissionPermissionRead), controller.FindOne)
+	r.Get("", middlewares.PermissionMiddleware(userService, enums.PermissionRoleRead), controller.FindAll)
+	r.Get("/:id", middlewares.PermissionMiddleware(userService, enums.PermissionRoleRead), controller.FindOne)
 	r.Post("", middlewares.PermissionMiddleware(userService, enums.PermissionRoleCreate), controller.Create)
 	r.Patch("/:id", middlewares.PermissionMiddleware(userService, enums.PermissionRoleUpdate), controller.Update)
 	r.Delete("/:id", middlewares.PermissionMiddleware(userService, enums.PermissionRoleDelete), controller.Delete)

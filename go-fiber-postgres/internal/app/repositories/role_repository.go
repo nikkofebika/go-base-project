@@ -154,6 +154,7 @@ func (r *roleRepository) ForceDelete(id uint64) error {
 
 func (r *roleRepository) Restore(id uint64) error {
 	result := r.DB().Where(request.ParamID+"=?", id).UpdateColumns(map[string]any{
+		entities.DeletedAt:   nil,
 		entities.DeletedByID: nil,
 	})
 

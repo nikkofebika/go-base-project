@@ -81,8 +81,7 @@ func roleSeeder(db *gorm.DB, permissions []entities.Permission) error {
 
 		if existing.Name == "User" {
 			// Sync all permissions to User
-			db.Model(&existing).Association("Permissions").Replace(permissions)
-			if err := db.Error; err != nil {
+			if err := db.Model(&existing).Association("Permissions").Replace(permissions); err != nil {
 				return err
 			}
 		}
@@ -136,8 +135,7 @@ func userSeeder(db *gorm.DB) error {
 			if err := db.Where("name = ?", u.RoleName).First(&role).Error; err != nil {
 				return err
 			}
-			db.Model(&existing).Association("Roles").Replace([]entities.Role{role})
-			if err := db.Error; err != nil {
+			if err := db.Model(&existing).Association("Roles").Replace([]entities.Role{role}); err != nil {
 				return err
 			}
 		}

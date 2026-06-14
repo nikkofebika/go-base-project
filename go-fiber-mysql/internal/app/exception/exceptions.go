@@ -2,8 +2,8 @@ package exception
 
 import (
 	"errors"
+	"strings"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/utils/v2"
 	"gorm.io/gorm"
@@ -146,21 +146,27 @@ var gormErrors = map[error]int{
 
 func NewDatabaseException(err error) *BaseException {
 	for gormError, statusCode := range gormErrors {
-		if statusCode == 404 {
-			return NewNotFoundException()
-		}
+		if errors.Is(err, gormError) {
+			if statusCode == 404 {
+				return NewNotFoundException()
+			}
 
-		if errors.Is(err, gormError) && statusCode < 500 {
+			if statusCode < 500 {
+				return &BaseException{
+					StatusCode: statusCode,
+					Message:    err.Error(),
+				}
+			}
+
 			return &BaseException{
 				StatusCode: statusCode,
-				Message:    err.Error(),
+				Message:    utils.StatusMessage(statusCode),
 			}
 		}
 	}
 
-	var mysqlErr *mysql.MySQLError
-	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
-		return &BaseException{StatusCode: 409, Message: mysqlErr.Message}
+	if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+		return &BaseException{StatusCode: 409, Message: err.Error()}
 	}
 
 	return &BaseException{StatusCode: 500, Message: utils.StatusMessage(500)}
