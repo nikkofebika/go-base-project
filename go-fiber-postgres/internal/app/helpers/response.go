@@ -42,7 +42,7 @@ func NewResponse[T any](c fiber.Ctx, data T) error {
 }
 
 func NewResponsePagination[T any](c fiber.Ctx, data []T, meta *Meta) error {
-	return c.JSON(Response[[]T]{
+	return c.Status(fiber.StatusOK).JSON(Response[[]T]{
 		Data: &data,
 		Meta: meta,
 	})
