@@ -32,7 +32,7 @@ func authRouter(router fiber.Router, deps *RouterDependencies, userService servi
 
 	r := router.Group("auth")
 	r.Post("forgot-password", controller.ForgotPassword)
-	r.Get("me", middlewares.AuthMiddleware(deps.AppConfig), controller.Me)
+	r.Get("me", middlewares.AuthMiddleware(deps.AppConfig, deps.DB), controller.Me)
 	r.Post("refresh-token", controller.RefreshToken)
 	r.Post("reset-password", controller.ResetPassword)
 	r.Post("token", controller.Token)
@@ -41,7 +41,7 @@ func authRouter(router fiber.Router, deps *RouterDependencies, userService servi
 func usersRouter(router fiber.Router, deps *RouterDependencies, service services.UserService) {
 	controller := controllers.NewUserController(service, deps.Validator)
 
-	r := router.Group("users", middlewares.AuthMiddleware(deps.AppConfig))
+	r := router.Group("users", middlewares.AuthMiddleware(deps.AppConfig, deps.DB))
 	r.Get("", middlewares.PermissionMiddleware(service, enums.PermissionUserRead), controller.FindAll)
 	r.Get("/:id", middlewares.PermissionMiddleware(service, enums.PermissionUserRead), controller.FindOne)
 	r.Post("", middlewares.PermissionMiddleware(service, enums.PermissionUserCreate), controller.Create)
@@ -57,7 +57,7 @@ func rolesRouter(router fiber.Router, deps *RouterDependencies, userService serv
 	service := services.NewRoleService(repository)
 	controller := controllers.NewRoleController(service, deps.Validator)
 
-	r := router.Group("roles", middlewares.AuthMiddleware(deps.AppConfig))
+	r := router.Group("roles", middlewares.AuthMiddleware(deps.AppConfig, deps.DB))
 	r.Get("", middlewares.PermissionMiddleware(userService, enums.PermissionRoleRead), controller.FindAll)
 	r.Get("/:id", middlewares.PermissionMiddleware(userService, enums.PermissionRoleRead), controller.FindOne)
 	r.Post("", middlewares.PermissionMiddleware(userService, enums.PermissionRoleCreate), controller.Create)
@@ -73,7 +73,7 @@ func permissionsRouter(router fiber.Router, deps *RouterDependencies, userServic
 	service := services.NewPermissionService(repository)
 	controller := controllers.NewPermissionController(service, deps.Validator)
 
-	r := router.Group("permissions", middlewares.AuthMiddleware(deps.AppConfig))
+	r := router.Group("permissions", middlewares.AuthMiddleware(deps.AppConfig, deps.DB))
 	r.Get("", middlewares.PermissionMiddleware(userService, enums.PermissionRoleRead), controller.FindAll)
 	r.Get("/:id", middlewares.PermissionMiddleware(userService, enums.PermissionRoleRead), controller.FindOne)
 	r.Post("", middlewares.PermissionMiddleware(userService, enums.PermissionRoleCreate), controller.Create)

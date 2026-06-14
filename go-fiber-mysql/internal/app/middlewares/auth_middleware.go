@@ -1,15 +1,17 @@
 package middlewares
 
 import (
+	"go-fiber-mysql/internal/app/entities"
 	"go-fiber-mysql/internal/app/exception"
 	"go-fiber-mysql/internal/config"
 	"go-fiber-mysql/internal/pkg/jwt"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
+	"gorm.io/gorm"
 )
 
-func AuthMiddleware(cfg *config.AppConfig) fiber.Handler {
+func AuthMiddleware(cfg *config.AppConfig, db *gorm.DB) fiber.Handler {
 	return func(ctx fiber.Ctx) error {
 		// get authorization bearer
 		header := ctx.Get(fiber.HeaderAuthorization)
@@ -35,9 +37,15 @@ func AuthMiddleware(cfg *config.AppConfig) fiber.Handler {
 			return exception.NewUnauthorizedException()
 		}
 
+		// verify user still exists in database and is not soft-deleted
+		var dbUser entities.User
+		if err := db.First(&dbUser, user.ID).Error; err != nil {
+			return exception.NewUnauthorizedException()
+		}
+
 		// attach data to the context
-		ctx.Locals("user", user)
-		ctx.Locals("user_id", user.ID)
+		ctx.Locals("user", &dbUser)
+		ctx.Locals("user_id", dbUser.ID)
 		return ctx.Next()
 	}
 }

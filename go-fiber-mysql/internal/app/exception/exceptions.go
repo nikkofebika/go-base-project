@@ -154,7 +154,7 @@ func NewDatabaseException(err error) *BaseException {
 			if statusCode < 500 {
 				return &BaseException{
 					StatusCode: statusCode,
-					Message:    err.Error(),
+					Message:    utils.StatusMessage(statusCode),
 				}
 			}
 
@@ -166,7 +166,7 @@ func NewDatabaseException(err error) *BaseException {
 	}
 
 	if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-		return &BaseException{StatusCode: 409, Message: err.Error()}
+		return &BaseException{StatusCode: 409, Message: utils.StatusMessage(409)}
 	}
 
 	return &BaseException{StatusCode: 500, Message: utils.StatusMessage(500)}

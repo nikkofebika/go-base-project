@@ -4,7 +4,7 @@ type TokenType string
 
 const (
 	TokenTypeRefreshToken   TokenType = "refresh_token"
-	TokenTypeForgotPassword TokenType = "technician_lead"
+	TokenTypeForgotPassword TokenType = "forgot_password"
 )
 
 func (u TokenType) IsValid() bool {
