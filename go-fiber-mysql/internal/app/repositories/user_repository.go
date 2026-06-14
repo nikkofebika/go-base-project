@@ -2,9 +2,7 @@ package repositories
 
 import (
 	"go-fiber-mysql/internal/app/entities"
-	"go-fiber-mysql/internal/app/exception"
 	"go-fiber-mysql/internal/pkg/request"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -22,130 +20,26 @@ type UserRepository interface {
 	Restore(id uint64) error
 	SyncRoles(id uint64, roleIDs []uint64) error
 	GetPermissionByUserID(userID uint64) ([]string, error)
-
 }
 
 type userRepository struct {
-	db *gorm.DB
+	*BaseRepository[entities.User]
 }
 
 func NewUserRepository(db *gorm.DB) UserRepository {
 	return &userRepository{
-		db: db,
+		BaseRepository: NewBaseRepository[entities.User](db),
 	}
-}
-
-func (r *userRepository) DB() *gorm.DB {
-	return r.db.Model(&entities.User{})
 }
 
 func (r *userRepository) WithTx(tx *gorm.DB) UserRepository {
-	return &userRepository{db: tx}
-}
-
-func (r *userRepository) FindAll(db *gorm.DB, page, perPage int) ([]entities.User, int64, error) {
-	var datas []entities.User
-	var total int64
-
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	offset := (page - 1) * perPage
-	if err := db.Limit(perPage).Offset(offset).Find(&datas).Error; err != nil {
-		return nil, 0, err
-	}
-
-	return datas, total, nil
-
-}
-
-func (r *userRepository) FindOne(id uint64, includes []request.AppliedInclude) (entities.User, error) {
-	var data entities.User
-
-	db := r.DB()
-
-	for _, include := range includes {
-		db = include.Apply(db)
-	}
-
-	err := db.Take(&data, id).Error
-
-	return data, err
+	return &userRepository{BaseRepository: r.BaseRepository.WithTx(tx)}
 }
 
 func (r *userRepository) FindOneByEmail(email string) (entities.User, error) {
 	var data entities.User
-
 	err := r.db.Where("email=?", email).Take(&data).Error
-
 	return data, err
-}
-
-func (r *userRepository) Create(data *entities.User) error {
-	return r.db.Create(data).Error
-}
-
-func (r *userRepository) Update(id uint64, data map[string]any) error {
-	result := r.DB().Where(request.ParamID+"=?", id).Updates(data)
-
-	if result.RowsAffected <= 0 {
-		return exception.NewNotFoundException()
-	}
-
-	if result.Error != nil {
-		return exception.NewDatabaseException(result.Error)
-	}
-
-	return nil
-}
-
-func (r *userRepository) Delete(id, userID uint64) error {
-	result := r.DB().Where(request.ParamID+"=?", id).Updates(map[string]any{
-		entities.DeletedAt:   gorm.DeletedAt{Time: time.Now(), Valid: true},
-		entities.DeletedByID: userID,
-	})
-
-	if result.RowsAffected <= 0 {
-		return exception.NewNotFoundException()
-	}
-
-	if result.Error != nil {
-		return exception.NewDatabaseException(result.Error)
-	}
-
-	return nil
-}
-
-func (r *userRepository) ForceDelete(id uint64) error {
-	result := r.db.Unscoped().Delete(&entities.User{}, id)
-
-	if result.RowsAffected <= 0 {
-		return exception.NewNotFoundException()
-	}
-
-	if result.Error != nil {
-		return exception.NewDatabaseException(result.Error)
-	}
-
-	return nil
-}
-
-func (r *userRepository) Restore(id uint64) error {
-	result := r.DB().Where(request.ParamID+"=?", id).UpdateColumns(map[string]any{
-		entities.DeletedAt:   nil,
-		entities.DeletedByID: nil,
-	})
-
-	if result.RowsAffected <= 0 {
-		return exception.NewNotFoundException()
-	}
-
-	if result.Error != nil {
-		return exception.NewDatabaseException(result.Error)
-	}
-
-	return nil
 }
 
 func (r *userRepository) SyncRoles(id uint64, roleIDs []uint64) error {

@@ -4,7 +4,6 @@ import (
 	"go-fiber-postgres/internal/app/entities"
 	"go-fiber-postgres/internal/app/exception"
 	"go-fiber-postgres/internal/pkg/request"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -23,49 +22,17 @@ type RoleRepository interface {
 }
 
 type roleRepository struct {
-	db *gorm.DB
+	*BaseRepository[entities.Role]
 }
 
 func NewRoleRepository(db *gorm.DB) RoleRepository {
 	return &roleRepository{
-		db: db,
+		BaseRepository: NewBaseRepository[entities.Role](db),
 	}
-}
-
-func (r *roleRepository) DB() *gorm.DB {
-	return r.db.Model(&entities.Role{})
 }
 
 func (r *roleRepository) WithTx(tx *gorm.DB) RoleRepository {
-	return &roleRepository{db: tx}
-}
-
-func (r *roleRepository) FindAll(db *gorm.DB, page, perPage int) ([]entities.Role, int64, error) {
-	var datas []entities.Role
-	var total int64
-
-	if err := db.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	offset := (page - 1) * perPage
-	if err := db.Limit(perPage).Offset(offset).Find(&datas).Error; err != nil {
-		return nil, 0, err
-	}
-
-	return datas, total, nil
-}
-
-func (r *roleRepository) FindOne(id uint64, includes []request.AppliedInclude) (entities.Role, error) {
-	var data entities.Role
-
-	db := r.DB()
-	for _, include := range includes {
-		db = include.Apply(db)
-	}
-
-	err := db.Take(&data, id).Error
-	return data, err
+	return &roleRepository{BaseRepository: r.BaseRepository.WithTx(tx)}
 }
 
 func (r *roleRepository) Create(data *entities.Role, permissionIDs []uint64) error {
@@ -119,54 +86,6 @@ func (r *roleRepository) Update(id uint64, data map[string]any, permissionIDs []
 
 		return nil
 	})
-}
-
-func (r *roleRepository) Delete(id, userID uint64) error {
-	result := r.DB().Where(request.ParamID+"=?", id).Updates(map[string]any{
-		entities.DeletedAt:   gorm.DeletedAt{Time: time.Now(), Valid: true},
-		entities.DeletedByID: userID,
-	})
-
-	if result.RowsAffected <= 0 {
-		return exception.NewNotFoundException()
-	}
-
-	if result.Error != nil {
-		return exception.NewDatabaseException(result.Error)
-	}
-
-	return nil
-}
-
-func (r *roleRepository) ForceDelete(id uint64) error {
-	result := r.db.Unscoped().Delete(&entities.Role{}, id)
-
-	if result.RowsAffected <= 0 {
-		return exception.NewNotFoundException()
-	}
-
-	if result.Error != nil {
-		return exception.NewDatabaseException(result.Error)
-	}
-
-	return nil
-}
-
-func (r *roleRepository) Restore(id uint64) error {
-	result := r.DB().Where(request.ParamID+"=?", id).UpdateColumns(map[string]any{
-		entities.DeletedAt:   nil,
-		entities.DeletedByID: nil,
-	})
-
-	if result.RowsAffected <= 0 {
-		return exception.NewNotFoundException()
-	}
-
-	if result.Error != nil {
-		return exception.NewDatabaseException(result.Error)
-	}
-
-	return nil
 }
 
 func (r *roleRepository) SyncPermissions(id uint64, permissionIDs []uint64) error {
