@@ -1,0 +1,73 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "docs/AGENTS.md",
+    "docs/ARCHITECTURE.md",
+    "docs/CONVENTION.md",
+    "docs/DATABASE.md",
+    "docs/API.md",
+    "docs/ERD.md"
+  ],
+  "references": {
+    "prd": {
+      "path": "docs/PRD.md",
+      "description": "Product Requirement Document for Alfatihah Center"
+    }
+  },
+  "lsp": {
+    "go": {
+      "command": ["gopls"],
+      "extensions": [".go"],
+      "env": {
+        "GOFLAGS": "-mod=mod"
+      },
+      "initialization": {
+        "completeUnimported": true,
+        "hoverKind": "FullDocumentation",
+        "linksInHover": true
+      }
+    }
+  },
+  "mcp": {
+    "postgres": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-postgres"],
+      "enabled": true,
+      "environment": {
+        "POSTGRES_CONNECTION_STRING": "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}"
+      }
+    },
+    "redis": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-redis"],
+      "enabled": true,
+      "environment": {
+        "REDIS_URL": "redis://${REDIS_HOST}:${REDIS_PORT}"
+      }
+    }
+  },
+  "skills": {
+    "paths": [".opencode/skills"]
+  },
+  "formatter": {
+    "go": {
+      "command": ["gofumpt", "-w"],
+      "extensions": [".go"]
+    }
+  },
+  "permission": {
+    "bash": {
+      "go *": "allow",
+      "gofmt *": "allow",
+      "gofumpt *": "allow",
+      "goimports *": "allow",
+      "golangci-lint *": "allow",
+      "swag *": "allow",
+      "migrate *": "allow",
+      "air *": "allow",
+      "docker *": "allow",
+      "docker-compose *": "allow",
+      "*": "ask"
+    }
+  }
+}
